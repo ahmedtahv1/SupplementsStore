@@ -1,0 +1,141 @@
+@model Supplements.ViewModels.Shop.ProductListViewModel
+@{
+    ViewData["Title"] = "Home";
+}
+
+<div class="space-y-16">
+    <!-- Hero Section -->
+    <section class="hero relative overflow-hidden rounded-3xl shadow-2xl ring-1 ring-white/20">
+        <div class="hero-content relative z-10 px-8 py-20 sm:py-28 lg:py-36">
+            <div class="max-w-3xl">
+                <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/12 backdrop-blur-sm rounded-full text-white text-sm font-semibold mb-6 border border-white/25 shadow-sm">
+                    <span class="material-icons text-lg">local_fire_department</span>
+                    <span>Built For Strength And Recovery</span>
+                </div>
+                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-6 leading-[1.05]">
+                    Train Harder With <span class="text-primary-200">Premium Nutrition</span>
+                </h1>
+                <p class="text-lg sm:text-xl text-primary-50/90 mb-10 leading-relaxed max-w-2xl">
+                    Shop trusted supplements for muscle gain, fat loss, and daily performance. Clean formulas, fast shipping, and results-driven products.
+                </p>
+                <div class="flex flex-wrap gap-4">
+                    <a href="/Shop" class="btn btn-lg bg-white text-primary-700 hover:bg-primary-50 shadow-xl hover:shadow-2xl">
+                        <span class="material-icons">shopping_bag</span>
+                        Shop Now
+                    </a>
+                    <a href="/Shop?categoryId=@Model.Categories.FirstOrDefault()?.Id" class="btn btn-lg bg-white/12 backdrop-blur-sm text-white hover:bg-white/20 border-2 border-white/35">
+                        <span class="material-icons">category</span>
+                        Browse Categories
+                    </a>
+                </div>
+                <div class="mt-8 flex flex-wrap gap-3 text-sm text-white/90">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/20">
+                        <span class="material-icons text-base">verified</span> Authentic Brands
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/20">
+                        <span class="material-icons text-base">local_shipping</span> Fast Delivery
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/20">
+                        <span class="material-icons text-base">workspace_premium</span> Premium Quality
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Decorative Elements -->
+        <div class="absolute -top-24 -right-20 w-[340px] h-[340px] rounded-full bg-white/10 blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-20 right-24 w-[220px] h-[220px] rounded-full bg-primary-300/20 blur-2xl pointer-events-none"></div>
+        <div class="absolute top-10 right-10 hidden lg:flex flex-col gap-3 pointer-events-none">
+            <span class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/12 border border-white/20 text-white/95 backdrop-blur-sm text-sm font-medium">
+                <span class="material-icons text-base">fitness_center</span> Gym Performance
+            </span>
+            <span class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/12 border border-white/20 text-white/95 backdrop-blur-sm text-sm font-medium">
+                <span class="material-icons text-base">bolt</span> Clean Energy
+            </span>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-50 dark:from-gray-950 to-transparent"></div>
+    </section>
+
+    <!-- Categories Section -->
+    @if (Model.Categories.Any())
+    {
+        <section class="animate-slide-up">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2">Shop by Category</h2>
+                    <p class="text-gray-600 dark:text-gray-400">Target your goal with focused supplement stacks</p>
+                </div>
+                <a href="/Shop" class="hidden sm:inline-flex items-center gap-1 text-sm font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-base group">
+                    View All
+                    <span class="material-icons text-lg group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                </a>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                @foreach (var category in Model.Categories.Take(4))
+                {
+                    <a href="/Shop?categoryId=@category.Id" class="card card-hover group text-center p-8 ring-1 ring-gray-100 dark:ring-gray-800">
+                        <div class="w-20 h-20 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/30 dark:to-primary-800/30 rounded-2xl flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-all duration-300 shadow-lg">
+                            <span class="material-icons text-3xl text-primary-600 dark:text-primary-400">category</span>
+                        </div>
+                        <h3 class="font-bold text-gray-900 dark:text-white mb-2 text-lg">@category.Name</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">@category.ProductCount products</p>
+                    </a>
+                }
+            </div>
+        </section>
+    }
+
+    <!-- New Arrivals Section -->
+    @if (Model.Products.Items.Any())
+    {
+        <section class="animate-slide-up">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2">New Arrivals</h2>
+                    <p class="text-gray-600 dark:text-gray-400">Fresh picks selected for athletes and gym lifters</p>
+                </div>
+                <a href="/Shop" class="hidden sm:inline-flex items-center gap-1 text-sm font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-base group">
+                    View All
+                    <span class="material-icons text-lg group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                </a>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                @foreach (var product in Model.Products.Items)
+                {
+                    <partial name="_ProductCard" model="product" />
+                }
+            </div>
+        </section>
+    }
+
+    <!-- Features Section -->
+    <section class="card p-10 sm:p-14 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 ring-1 ring-gray-100 dark:ring-gray-800">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-3">Why Choose Us</h2>
+            <p class="text-gray-600 dark:text-gray-400">Built for disciplined training and long-term progress</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
+            <div class="text-center group">
+                <div class="w-20 h-20 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/30 dark:to-primary-800/30 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                    <span class="material-icons text-3xl text-primary-600 dark:text-primary-400">local_shipping</span>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">Free Shipping</h3>
+                <p class="text-gray-600 dark:text-gray-400 leading-relaxed">On all orders over $50. Fast and reliable delivery to your door.</p>
+            </div>
+            <div class="text-center group">
+                <div class="w-20 h-20 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/30 dark:to-primary-800/30 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                    <span class="material-icons text-3xl text-primary-600 dark:text-primary-400">verified</span>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">Quality Guaranteed</h3>
+                <p class="text-gray-600 dark:text-gray-400 leading-relaxed">100% authentic products from trusted brands you can rely on.</p>
+            </div>
+            <div class="text-center group">
+                <div class="w-20 h-20 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/30 dark:to-primary-800/30 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                    <span class="material-icons text-3xl text-primary-600 dark:text-primary-400">support_agent</span>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">24/7 Support</h3>
+                <p class="text-gray-600 dark:text-gray-400 leading-relaxed">Our expert team is always here to help with your questions.</p>
+            </div>
+        </div>
+    </section>
+</div>

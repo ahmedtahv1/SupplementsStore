@@ -1,0 +1,289 @@
+@model Supplements.ViewModels.Shop.ProductDetailViewModel
+@{
+    ViewData["Title"] = Model.Name;
+    var selectedVariant = Model.Variants.FirstOrDefault(v => v.InStock) ?? Model.Variants.FirstOrDefault();
+    var selectedBasePrice = Model.Price + (selectedVariant?.AdditionalPrice ?? 0);
+    var selectedFinalPrice = selectedBasePrice - (selectedBasePrice * Model.DiscountPercentage / 100);
+    var selectedSavedAmount = selectedBasePrice - selectedFinalPrice;
+    var selectedStock = selectedVariant?.StockQuantity ?? Model.StockQuantity;
+    var isPurchasable = selectedVariant?.InStock ?? Model.InStock;
+    var fallbackImageUrl = selectedVariant?.ImageUrl
+        ?? Model.MainImageUrl
+        ?? Model.Images.FirstOrDefault()?.ImageUrl
+        ?? Model.Variants.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v.ImageUrl))?.ImageUrl;
+}
+
+<div class="max-w-7xl mx-auto">
+    <partial name="_Breadcrumb" />
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+        <!-- Image Gallery -->
+        <div class="animate-slide-up">
+            <div class="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-3xl overflow-hidden mb-4 shadow-xl ring-1 ring-gray-200/80 dark:ring-gray-800">
+                @if (!string.IsNullOrEmpty(fallbackImageUrl))
+                {
+                    <img id="mainImage" src="@fallbackImageUrl" alt="@Model.Name" class="w-full h-full object-cover" />
+                }
+                else
+                {
+                    <div class="flex items-center justify-center h-full">
+                        <span class="material-icons text-8xl text-gray-300 dark:text-gray-600">image</span>
+                    </div>
+                }
+
+                @if (Model.HasDiscount)
+                {
+                    <span class="absolute top-4 left-4 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-bold px-4 py-2 rounded-xl shadow-lg">
+                        -@Model.DiscountPercentage% OFF
+                    </span>
+                }
+
+                @if (!Model.InStock)
+                {
+                    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center">
+                        <span class="bg-white/90 dark:bg-gray-900/90 text-gray-900 dark:text-white px-6 py-3 rounded-xl font-bold text-lg shadow-xl">
+                            Out of Stock
+                        </span>
+                    </div>
+                }
+            </div>
+
+            @if (Model.Images.Any() || Model.Variants.Any(v => !string.IsNullOrWhiteSpace(v.ImageUrl)) || !string.IsNullOrEmpty(Model.MainImageUrl))
+            {
+                <div class="flex gap-3 overflow-x-auto pb-2">
+                    @if (!string.IsNullOrEmpty(Model.MainImageUrl))
+                    {
+                        <img src="@Model.MainImageUrl"
+                             onclick="document.getElementById('mainImage').src=this.src"
+                             class="w-20 h-20 object-cover rounded-xl border-2 border-primary-500 cursor-pointer hover:opacity-80 transition-base flex-shrink-0 shadow-sm" />
+                    }
+                    @foreach (var img in Model.Images)
+                    {
+                        <img src="@img.ImageUrl"
+                             onclick="document.getElementById('mainImage').src=this.src"
+                             class="w-20 h-20 object-cover rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-primary-500 cursor-pointer hover:opacity-80 transition-base flex-shrink-0 shadow-sm" />
+                    }
+                    @foreach (var variant in Model.Variants.Where(v => !string.IsNullOrWhiteSpace(v.ImageUrl)))
+                    {
+                        <img src="@variant.ImageUrl"
+                             onclick="document.getElementById('mainImage').src=this.src"
+                             title="@($"{variant.Flavor} {variant.Size}".Trim())"
+                             class="w-20 h-20 object-cover rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-primary-500 cursor-pointer hover:opacity-80 transition-base flex-shrink-0 shadow-sm" />
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Product Info -->
+        <div class="animate-slide-up">
+            <p class="text-sm font-bold text-primary-600 dark:text-primary-400 uppercase tracking-wider mb-2">@Model.BrandName</p>
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">@Model.Name</h1>
+
+            <!-- Price -->
+            <div class="flex items-baseline gap-3 mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl ring-1 ring-gray-200 dark:ring-gray-700">
+                <span id="finalPrice" class="text-4xl font-bold @(Model.HasDiscount ? "text-primary-600 dark:text-primary-400" : "text-gray-900 dark:text-white")">@Model.Currency @selectedFinalPrice.ToString("F2")</span>
+                <span id="basePrice" class="text-xl text-gray-400 line-through @(Model.HasDiscount ? "" : "hidden")">@Model.Currency @selectedBasePrice.ToString("F2")</span>
+                <span id="saveBadge" class="badge badge-danger @(Model.HasDiscount ? "" : "hidden")">Save @Model.Currency @selectedSavedAmount.ToString("F2")</span>
+            </div>
+
+            <!-- Description -->
+            <p class="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed text-lg">@Model.Description</p>
+
+            <!-- Variants -->
+            @if (Model.Variants.Any())
+            {
+                <div class="mb-8">
+                    <label class="block text-sm font-bold text-gray-900 dark:text-white mb-3">Select Options</label>
+                    <div class="select-wrap max-w-xl">
+                        <select id="variantSelect" class="select-ui select-ui-product">
+                            @foreach (var variant in Model.Variants)
+                            {
+                                var optionName = string.Join(" / ", new[] { variant.Flavor, variant.Size }.Where(x => !string.IsNullOrWhiteSpace(x)));
+                                if (string.IsNullOrWhiteSpace(optionName))
+                                    optionName = "Default option";
+                                var optionBasePrice = Model.Price + variant.AdditionalPrice;
+                                var optionFinalPrice = optionBasePrice - (optionBasePrice * Model.DiscountPercentage / 100);
+                                var optionSavedAmount = optionBasePrice - optionFinalPrice;
+                                <option value="@variant.Id"
+                                        selected="@(selectedVariant?.Id == variant.Id)"
+                                        disabled="@(!variant.InStock)"
+                                        data-image="@(variant.ImageUrl ?? fallbackImageUrl)"
+                                        data-stock="@variant.StockQuantity"
+                                        data-base-price="@optionBasePrice.ToString("F2")"
+                                        data-final-price="@optionFinalPrice.ToString("F2")"
+                                        data-saved-amount="@optionSavedAmount.ToString("F2")"
+                                        data-in-stock="@variant.InStock.ToString().ToLowerInvariant()">
+                                    @optionName - @Model.Currency @optionFinalPrice.ToString("F2") - @(variant.InStock ? $"{variant.StockQuantity} in stock" : "Out of stock")
+                                </option>
+                            }
+                        </select>
+                        <span class="material-icons select-ui-icon">expand_more</span>
+                    </div>
+                </div>
+            }
+
+            <!-- Quantity & Stock -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-8">
+                <div>
+                    <label class="block text-sm font-bold text-gray-900 dark:text-white mb-3">Quantity</label>
+                    <div class="flex items-center border-2 border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm">
+                        <button type="button" class="qty-minus px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-base font-bold">−</button>
+                       <input type="number"
+                               id="quantityInput"
+                               value="1"
+                               min="1"
+                               max="@selectedStock"
+                               class="qty-input w-20 text-center border-x-2 border-gray-200 dark:border-gray-700 py-3 bg-transparent text-gray-900 dark:text-gray-100 font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                        <button type="button" class="qty-plus px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-base font-bold">+</button>
+                    </div>
+                </div>
+
+                <div class="pt-0 sm:pt-6">
+                    <span id="stockBadge" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl font-medium @(isPurchasable ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400" : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400")">
+                        <span id="stockDot" class="w-2.5 h-2.5 rounded-full @(isPurchasable ? "bg-green-500 animate-pulse" : "bg-red-500")"></span>
+                        <span id="stockText">@(isPurchasable ? $"In Stock ({selectedStock} available)" : "Out of Stock")</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-3 mb-8">
+                <form method="post" asp-controller="Cart" asp-action="AddToCart" class="flex-1">
+                    <input type="hidden" name="productVariantId" id="selectedVariantId" value="@selectedVariant?.Id" />
+                    <input type="hidden" name="quantity" id="addToCartQuantity" value="1" />
+                    <button id="addToCartButton"
+                            type="submit"
+                            class="btn btn-primary btn-lg w-full shadow-lg @(isPurchasable && selectedVariant != null ? "" : "opacity-50 cursor-not-allowed")"
+                            @(isPurchasable && selectedVariant != null ? "" : "disabled")>
+                        <span class="material-icons">shopping_cart</span>
+                        Add to Cart
+                    </button>
+                </form>
+                <form method="post" asp-controller="Wishlist" asp-action="AddToWishlist">
+                    <input type="hidden" name="productId" value="@Model.Id" />
+                    <button type="submit"
+                            class="btn btn-lg p-3 border-2 border-gray-200 dark:border-gray-700 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-800 shadow-sm">
+                        <span class="material-icons">favorite_border</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Product Meta -->
+            <div class="card card-body bg-gray-50 dark:bg-gray-800 ring-1 ring-gray-200 dark:ring-gray-700">
+                <h3 class="font-bold text-gray-900 dark:text-white mb-4">Product Information</h3>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div class="flex items-start gap-3">
+                        <span class="material-icons text-primary-600 dark:text-primary-400 text-lg">category</span>
+                        <div>
+                            <span class="block text-gray-500 dark:text-gray-400 text-xs mb-1">Category</span>
+                            <a href="/Shop?categoryId=@Model.CategoryId" class="font-semibold text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-base">@Model.CategoryName</a>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="material-icons text-primary-600 dark:text-primary-400 text-lg">branding_watermark</span>
+                        <div>
+                            <span class="block text-gray-500 dark:text-gray-400 text-xs mb-1">Brand</span>
+                            <a href="/Shop?brandId=@Model.BrandId" class="font-semibold text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-base">@Model.BrandName</a>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="material-icons text-primary-600 dark:text-primary-400 text-lg">store</span>
+                        <div>
+                            <span class="block text-gray-500 dark:text-gray-400 text-xs mb-1">Seller</span>
+                            <span class="font-semibold text-gray-900 dark:text-white">@Model.SellerName</span>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="material-icons text-primary-600 dark:text-primary-400 text-lg">schedule</span>
+                        <div>
+                            <span class="block text-gray-500 dark:text-gray-400 text-xs mb-1">Added</span>
+                            <span class="font-semibold text-gray-900 dark:text-white">@Model.CreatedAt.ToString("MMM dd, yyyy")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const hasDiscount = @Model.HasDiscount.ToString().ToLowerInvariant();
+        const currencyCode = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Currency));
+        const fallbackImageUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(fallbackImageUrl ?? ""));
+
+        function setStockState(inStock, stock) {
+            const badge = document.getElementById('stockBadge');
+            const dot = document.getElementById('stockDot');
+            const text = document.getElementById('stockText');
+            const button = document.getElementById('addToCartButton');
+            if (!badge || !dot || !text || !button) return;
+
+            badge.classList.toggle('bg-green-100', inStock);
+            badge.classList.toggle('dark:bg-green-900/30', inStock);
+            badge.classList.toggle('text-green-700', inStock);
+            badge.classList.toggle('dark:text-green-400', inStock);
+            badge.classList.toggle('bg-red-100', !inStock);
+            badge.classList.toggle('dark:bg-red-900/30', !inStock);
+            badge.classList.toggle('text-red-700', !inStock);
+            badge.classList.toggle('dark:text-red-400', !inStock);
+
+            dot.classList.toggle('bg-green-500', inStock);
+            dot.classList.toggle('animate-pulse', inStock);
+            dot.classList.toggle('bg-red-500', !inStock);
+            text.textContent = inStock ? `In Stock (${stock} available)` : 'Out of Stock';
+
+            button.disabled = !inStock;
+            button.classList.toggle('opacity-50', !inStock);
+            button.classList.toggle('cursor-not-allowed', !inStock);
+        }
+
+        function selectVariant(select) {
+            const option = select.selectedOptions[0];
+            if (!option) return;
+
+            const stock = parseInt(option.dataset.stock || '0', 10);
+            const inStock = option.dataset.inStock === 'true';
+            const imageUrl = option.dataset.image || fallbackImageUrl;
+            const mainImage = document.getElementById('mainImage');
+            if (mainImage && imageUrl) {
+                mainImage.src = imageUrl;
+            }
+
+            document.getElementById('selectedVariantId').value = option.value;
+            document.getElementById('finalPrice').textContent = `${currencyCode} ${option.dataset.finalPrice}`;
+            document.getElementById('basePrice').textContent = `${currencyCode} ${option.dataset.basePrice}`;
+            document.getElementById('saveBadge').textContent = `Save ${currencyCode} ${option.dataset.savedAmount}`;
+
+            const basePrice = document.getElementById('basePrice');
+            const saveBadge = document.getElementById('saveBadge');
+            basePrice?.classList.toggle('hidden', !hasDiscount);
+            saveBadge?.classList.toggle('hidden', !hasDiscount);
+
+            const quantityInput = document.getElementById('quantityInput');
+            if (quantityInput) {
+                quantityInput.max = Math.max(stock, 1).toString();
+                if (parseInt(quantityInput.value || '1', 10) > stock) {
+                    quantityInput.value = Math.max(stock, 1).toString();
+                }
+                document.getElementById('addToCartQuantity').value = quantityInput.value;
+            }
+
+            setStockState(inStock, stock);
+        }
+
+        document.getElementById('quantityInput')?.addEventListener('change', function() {
+            document.getElementById('addToCartQuantity').value = this.value;
+        });
+        document.querySelectorAll('.qty-minus, .qty-plus').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.getElementById('addToCartQuantity').value = document.getElementById('quantityInput').value;
+            });
+        });
+        const variantSelect = document.getElementById('variantSelect');
+        if (variantSelect) {
+            variantSelect.addEventListener('change', function() { selectVariant(this); });
+            selectVariant(variantSelect);
+        }
+    </script>
+}
