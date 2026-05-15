@@ -121,7 +121,7 @@
                         @foreach (var item in variantItems)
                         {
                             <option value="@item.variant.Id"
-                                    selected="@(item.isSelected)"
+                                    @(item.isSelected ? "selected" : "")
                                     disabled="@(!item.variant.InStock)"
                                     data-image="@(item.variant.ImageUrl ?? fallbackImageUrl)"
                                     data-stock="@item.variant.StockQuantity"
@@ -147,7 +147,7 @@
                         </button>
 
                         <div id="variantDropdownMenu"
-                             class="hidden absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/40 border border-gray-200/80 dark:border-gray-800/80 backdrop-blur-xl py-2 z-50 overflow-hidden origin-top-left max-h-96 overflow-y-auto"
+                             class="hidden absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/40 border border-gray-200/80 dark:border-gray-800/80 backdrop-blur-xl py-2 z-50 origin-top-left max-h-96 overflow-y-auto"
                              role="listbox"
                              aria-label="Product options">
 
@@ -439,20 +439,15 @@
             closeVariantDropdown();
         }
 
-        function toggleVariantDropdown() {
+        function openVariantDropdown() {
             const menu = document.getElementById('variantDropdownMenu');
             const toggle = document.getElementById('variantDropdownToggle');
             if (!menu || !toggle) return;
-            const isOpening = menu.classList.contains('hidden');
-            if (isOpening) {
-                menu.classList.remove('hidden', 'cat-dropdown-exit');
-                void menu.offsetWidth;
-                menu.classList.add('cat-dropdown-enter');
-                toggle.querySelector('.dropdown-chevron')?.classList.add('chevron-rotate');
-                toggle.setAttribute('aria-expanded', 'true');
-            } else {
-                closeVariantDropdown();
-            }
+            menu.classList.remove('hidden', 'cat-dropdown-exit');
+            void menu.offsetWidth;
+            menu.classList.add('cat-dropdown-enter');
+            toggle.querySelector('.dropdown-chevron')?.classList.add('chevron-rotate');
+            toggle.setAttribute('aria-expanded', 'true');
         }
 
         function closeVariantDropdown() {
@@ -467,6 +462,17 @@
                 menu.classList.add('hidden');
                 menu.classList.remove('cat-dropdown-exit');
             }, 150);
+        }
+
+        function toggleVariantDropdown() {
+            const menu = document.getElementById('variantDropdownMenu');
+            const toggle = document.getElementById('variantDropdownToggle');
+            if (!menu || !toggle) return;
+            if (menu.classList.contains('hidden')) {
+                openVariantDropdown();
+            } else {
+                closeVariantDropdown();
+            }
         }
 
         /* ── Init ── */
@@ -494,6 +500,13 @@
             e.stopPropagation();
             toggleVariantDropdown();
         });
+        ddToggle?.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleVariantDropdown();
+            }
+        });
 
         // Select option via event delegation on the menu
         const ddMenu = document.getElementById('variantDropdownMenu');
@@ -510,9 +523,12 @@
             }
         });
 
-        // Close on Escape
+        // Close on Escape and handle keyboard within menu
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') closeVariantDropdown();
+            if (e.key === 'Escape') {
+                closeVariantDropdown();
+                document.getElementById('variantDropdownToggle')?.focus();
+            }
         });
     </script>
 }

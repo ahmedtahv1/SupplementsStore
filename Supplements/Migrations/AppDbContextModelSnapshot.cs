@@ -171,7 +171,7 @@ namespace Supplements.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Addresses");
+                    b.ToTable("Addresses", (string)null);
                 });
 
             modelBuilder.Entity("Supplements.Core.Entities.Brand", b =>
@@ -191,7 +191,7 @@ namespace Supplements.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Brands");
+                    b.ToTable("Brands", (string)null);
                 });
 
             modelBuilder.Entity("Supplements.Core.Entities.Cart", b =>
@@ -217,7 +217,7 @@ namespace Supplements.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Carts");
+                    b.ToTable("Carts", (string)null);
                 });
 
             modelBuilder.Entity("Supplements.Core.Entities.CartItem", b =>
@@ -250,7 +250,7 @@ namespace Supplements.Migrations
 
                     b.HasIndex("ProductVariantId");
 
-                    b.ToTable("CartItems", t =>
+                    b.ToTable("CartItems", null, t =>
                         {
                             t.HasCheckConstraint("CK_CartItem_Quantity", "[Quantity] > 0");
                         });
@@ -273,7 +273,7 @@ namespace Supplements.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("Supplements.Core.Entities.Order", b =>
@@ -319,7 +319,7 @@ namespace Supplements.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Orders");
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("Supplements.Core.Entities.OrderItem", b =>
@@ -361,7 +361,7 @@ namespace Supplements.Migrations
 
                     b.HasIndex("ProductVariantId");
 
-                    b.ToTable("OrderItems", t =>
+                    b.ToTable("OrderItems", null, t =>
                         {
                             t.HasCheckConstraint("CK_OrderItem_Quantity", "[Quantity] > 0");
                         });
@@ -429,7 +429,7 @@ namespace Supplements.Migrations
 
                     b.HasIndex("SellerId");
 
-                    b.ToTable("Products", t =>
+                    b.ToTable("Products", null, t =>
                         {
                             t.HasCheckConstraint("CK_Product_Stock", "[StockQuantity] >= 0");
                         });
@@ -461,7 +461,7 @@ namespace Supplements.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductImages");
+                    b.ToTable("ProductImages", (string)null);
                 });
 
             modelBuilder.Entity("Supplements.Core.Entities.ProductVariant", b =>
@@ -502,7 +502,7 @@ namespace Supplements.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductVariants");
+                    b.ToTable("ProductVariants", (string)null);
                 });
 
             modelBuilder.Entity("Supplements.Core.Entities.Role", b =>
@@ -639,7 +639,7 @@ namespace Supplements.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Wishlists");
+                    b.ToTable("Wishlists", (string)null);
                 });
 
             modelBuilder.Entity("Supplements.Core.Entities.WishlistItem", b =>
@@ -669,7 +669,7 @@ namespace Supplements.Migrations
 
                     b.HasIndex("WishlistId");
 
-                    b.ToTable("WishlistItems");
+                    b.ToTable("WishlistItems", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
