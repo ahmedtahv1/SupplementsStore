@@ -121,7 +121,7 @@
                         @foreach (var item in variantItems)
                         {
                             <option value="@item.variant.Id"
-                                    @(item.isSelected ? "selected" : "")
+                                    selected="@(item.isSelected ? "selected" : null)"
                                     disabled="@(!item.variant.InStock)"
                                     data-image="@(item.variant.ImageUrl ?? fallbackImageUrl)"
                                     data-stock="@item.variant.StockQuantity"
