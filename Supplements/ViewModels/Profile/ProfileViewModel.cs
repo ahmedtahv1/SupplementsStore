@@ -16,7 +16,7 @@ public class EditProfileViewModel
     [StringLength(100)]
     public string FullName { get; set; } = string.Empty;
 
-    [Phone(ErrorMessage = "Invalid phone number")]
+    [RegularExpression(@"^01[0125][0-9]{8}$", ErrorMessage = "Phone number must be a valid Egyptian number (e.g. 01012345678)")]
     public string? PhoneNumber { get; set; }
 }
 

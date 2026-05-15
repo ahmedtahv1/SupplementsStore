@@ -1,0 +1,17 @@
+HTTP/1.1 302 Found
+Content-Length: 0
+Date: Fri, 15 May 2026 19:32:15 GMT
+Server: Kestrel
+Location: https://localhost:7103/Account/Login?ReturnUrl=%2FProfile
+
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+Date: Fri, 15 May 2026 19:32:15 GMT
+Server: Kestrel
+Cache-Control: no-cache, no-store
+Pragma: no-cache
+Set-Cookie: .AspNetCore.Antiforgery.h3jAVkLq5oM=CfDJ8IDQ-poOl9VEmtXRJ7L4G1dp9V6RsD_9EBlGrP_1cXIw4nBErGNYr6zMpS-nBxQSwLUuN-9fh34isRf6EhYfQiUrkH-efIbM4G894vTctGUF0P9moRmhLZyKEE4wKGJLodja8eHRoZJWVF41mq5r7t4; path=/; samesite=strict; httponly
+Set-Cookie: .AspNetCore.Mvc.CookieTempDataProvider=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; samesite=lax; httponly
+Transfer-Encoding: chunked
+X-Frame-Options: SAMEORIGIN
+
