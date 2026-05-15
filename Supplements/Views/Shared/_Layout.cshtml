@@ -10,11 +10,9 @@
 
     <partial name="_Navbar" />
 
-    <main class="min-h-screen relative">
-        <div class="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-            <div class="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-primary-200/30 dark:bg-primary-900/20 blur-3xl"></div>
-            <div class="absolute top-40 -right-20 w-72 h-72 rounded-full bg-emerald-200/20 dark:bg-emerald-900/20 blur-3xl"></div>
-        </div>
+    <main class="min-h-screen relative overflow-hidden">
+        <div class="pointer-events-none absolute -top-24 -left-24 w-72 h-72 rounded-full bg-primary-200/30 dark:bg-primary-900/20 blur-3xl"></div>
+        <div class="pointer-events-none absolute top-40 -right-20 w-72 h-72 rounded-full bg-emerald-200/20 dark:bg-emerald-900/20 blur-3xl"></div>
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             @RenderBody()
         </div>

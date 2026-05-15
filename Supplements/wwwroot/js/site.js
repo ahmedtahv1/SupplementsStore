@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', function () {
-    initMobileMenu();
-    initSidebar();
-    initDropdowns();
-    initQuantityInputs();
+    try { initMobileMenu(); } catch (e) { console.error('Mobile menu init error:', e); }
+    try { initSidebar(); } catch (e) { console.error('Sidebar init error:', e); }
+    try { initDropdowns(); } catch (e) { console.error('Dropdowns init error:', e); }
+    try { initQuantityInputs(); } catch (e) { console.error('Quantity inputs init error:', e); }
 });
 
 function initMobileMenu() {
@@ -40,52 +40,56 @@ function initSidebar() {
 }
 
 function initDropdowns() {
-    document.querySelectorAll('.dropdown-toggle').forEach(btn => {
-        btn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            const menu = this.nextElementSibling;
-            const chevron = this.querySelector('.dropdown-chevron');
-            if (!menu) return;
+    try {
+        document.querySelectorAll('.dropdown-toggle').forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                const menu = this.nextElementSibling;
+                const chevron = this.querySelector('.dropdown-chevron');
+                if (!menu) return;
 
-            const isOpening = menu.classList.contains('hidden');
+                const isOpening = menu.classList.contains('hidden');
 
-            if (isOpening) {
-                menu.classList.remove('hidden', 'cat-dropdown-exit');
-                void menu.offsetWidth;
-                menu.classList.add('cat-dropdown-enter');
-                if (chevron) chevron.classList.add('chevron-rotate');
-            } else {
-                if (chevron) {
-                    menu.classList.remove('cat-dropdown-enter');
-                    menu.classList.add('cat-dropdown-exit');
-                    chevron.classList.remove('chevron-rotate');
-                    setTimeout(() => {
-                        menu.classList.add('hidden');
-                        menu.classList.remove('cat-dropdown-exit');
-                    }, 150);
+                if (isOpening) {
+                    menu.classList.remove('hidden', 'cat-dropdown-exit');
+                    void menu.offsetWidth;
+                    menu.classList.add('cat-dropdown-enter');
+                    if (chevron) chevron.classList.add('chevron-rotate');
                 } else {
-                    menu.classList.add('hidden');
+                    if (chevron) {
+                        menu.classList.remove('cat-dropdown-enter');
+                        menu.classList.add('cat-dropdown-exit');
+                        chevron.classList.remove('chevron-rotate');
+                        setTimeout(() => {
+                            menu.classList.add('hidden');
+                            menu.classList.remove('cat-dropdown-exit');
+                        }, 150);
+                    } else {
+                        menu.classList.add('hidden');
+                    }
                 }
-            }
 
-            if (this.hasAttribute('aria-expanded')) {
-                this.setAttribute('aria-expanded', String(!isOpening));
-            }
+                if (this.hasAttribute('aria-expanded')) {
+                    this.setAttribute('aria-expanded', String(!isOpening));
+                }
+            });
         });
-    });
+    } catch (e) { console.error('Dropdown toggle bind error:', e); }
 
-    document.addEventListener('click', function () {
-        document.querySelectorAll('.dropdown-menu:not(.hidden)').forEach(menu => {
-            const toggle = menu.previousElementSibling;
-            const chevron = toggle?.querySelector('.dropdown-chevron');
-            menu.classList.add('hidden');
-            menu.classList.remove('cat-dropdown-enter', 'cat-dropdown-exit');
-            if (chevron) chevron.classList.remove('chevron-rotate');
-            if (toggle?.hasAttribute('aria-expanded')) {
-                toggle.setAttribute('aria-expanded', 'false');
-            }
+    try {
+        document.addEventListener('click', function () {
+            document.querySelectorAll('.dropdown-menu:not(.hidden)').forEach(menu => {
+                const toggle = menu.previousElementSibling;
+                const chevron = toggle?.querySelector('.dropdown-chevron');
+                menu.classList.add('hidden');
+                menu.classList.remove('cat-dropdown-enter', 'cat-dropdown-exit');
+                if (chevron) chevron.classList.remove('chevron-rotate');
+                if (toggle?.hasAttribute('aria-expanded')) {
+                    toggle.setAttribute('aria-expanded', 'false');
+                }
+            });
         });
-    });
+    } catch (e) { console.error('Dropdown global close bind error:', e); }
 }
 
 function initQuantityInputs() {

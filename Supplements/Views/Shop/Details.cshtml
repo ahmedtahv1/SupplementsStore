@@ -135,7 +135,10 @@
                     </select>
 
                     <!-- Custom visual dropdown -->
-                    <div class="relative max-w-xl" id="variantDropdown" data-variant-dropdown>
+                    <div class="relative max-w-xl" id="variantDropdown" data-variant-dropdown
+                         data-has-discount="@Model.HasDiscount.ToString().ToLowerInvariant()"
+                         data-currency-code="@Model.Currency"
+                         data-fallback-image="@(fallbackImageUrl ?? "")">
                          <button type="button"
                                 id="variantDropdownToggle"
                                 class="flex items-center justify-between w-full px-5 py-4 text-left border-2 border-primary-400 dark:border-primary-700 rounded-xl bg-white dark:bg-gray-900 cursor-pointer outline-none transition-all duration-200 hover:border-primary-500 hover:shadow-lg hover:shadow-primary-500/10 focus:border-primary-600 focus:ring-2 focus:ring-primary-500 dark:hover:border-primary-500 dark:focus:border-primary-400 shadow-sm"
@@ -297,9 +300,10 @@
 
 @section Scripts {
     <script>
-        const hasDiscount = @Model.HasDiscount.ToString().ToLowerInvariant();
-        const currencyCode = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Currency));
-        const fallbackImageUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(fallbackImageUrl ?? ""));
+        const dd = document.getElementById('variantDropdown');
+        const hasDiscount = dd?.dataset.hasDiscount === 'true';
+        const currencyCode = dd?.dataset.currencyCode || '';
+        const fallbackImageUrl = dd?.dataset.fallbackImage || '';
 
         function setStockState(inStock, stock) {
             const badge = document.getElementById('stockBadge');
@@ -477,58 +481,79 @@
 
         /* ── Init ── */
 
-        document.getElementById('quantityInput')?.addEventListener('change', function() {
-            document.getElementById('addToCartQuantity').value = this.value;
-        });
-        document.querySelectorAll('.qty-minus, .qty-plus').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.getElementById('addToCartQuantity').value = document.getElementById('quantityInput').value;
+        function bindQuantityInputs() {
+            document.getElementById('quantityInput')?.addEventListener('change', function() {
+                document.getElementById('addToCartQuantity').value = this.value;
             });
-        });
+            document.querySelectorAll('.qty-minus, .qty-plus').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.getElementById('addToCartQuantity').value = document.getElementById('quantityInput').value;
+                });
+            });
+        }
 
-        const variantSelect = document.getElementById('variantSelect');
-        if (variantSelect) {
+        function initVariantSelect() {
+            const variantSelect = document.getElementById('variantSelect');
+            if (!variantSelect) return;
             variantSelect.addEventListener('change', function() { selectVariant(this); });
             selectVariant(variantSelect);
             updateVariantTriggerLabel();
             syncVisualSelection();
         }
 
-        // Toggle dropdown on trigger click
-        const ddToggle = document.getElementById('variantDropdownToggle');
-        ddToggle?.addEventListener('click', function(e) {
-            e.stopPropagation();
-            toggleVariantDropdown();
-        });
-        ddToggle?.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
+        function initVariantDropdown() {
+            const ddToggle = document.getElementById('variantDropdownToggle');
+            if (!ddToggle) return;
+
+            ddToggle.addEventListener('click', function(e) {
                 e.stopPropagation();
                 toggleVariantDropdown();
-            }
-        });
+            });
+            ddToggle.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleVariantDropdown();
+                }
+            });
 
-        // Select option via event delegation on the menu
-        const ddMenu = document.getElementById('variantDropdownMenu');
-        ddMenu?.addEventListener('click', function(e) {
-            const btn = e.target.closest('.variant-option');
-            if (btn) selectVariantOption(btn);
-        });
+            const ddMenu = document.getElementById('variantDropdownMenu');
+            ddMenu?.addEventListener('click', function(e) {
+                const btn = e.target.closest('.variant-option');
+                if (btn) selectVariantOption(btn);
+            });
+        }
 
-        // Close dropdown on outside click
-        document.addEventListener('click', function(e) {
-            const container = document.getElementById('variantDropdown');
-            if (container && !container.contains(e.target)) {
-                closeVariantDropdown();
-            }
-        });
+        function initGlobalHandlers() {
+            document.addEventListener('click', function(e) {
+                const container = document.getElementById('variantDropdown');
+                if (container && !container.contains(e.target)) {
+                    closeVariantDropdown();
+                }
+            });
 
-        // Close on Escape and handle keyboard within menu
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeVariantDropdown();
-                document.getElementById('variantDropdownToggle')?.focus();
-            }
-        });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeVariantDropdown();
+                    document.getElementById('variantDropdownToggle')?.focus();
+                }
+            });
+        }
+
+        try {
+            bindQuantityInputs();
+        } catch (e) { console.error('Quantity init error:', e); }
+
+        try {
+            initVariantSelect();
+        } catch (e) { console.error('Variant select init error:', e); }
+
+        try {
+            initVariantDropdown();
+        } catch (e) { console.error('Dropdown toggle init error:', e); }
+
+        try {
+            initGlobalHandlers();
+        } catch (e) { console.error('Global handlers init error:', e); }
     </script>
 }
