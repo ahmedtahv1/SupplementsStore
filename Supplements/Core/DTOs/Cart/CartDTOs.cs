@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Supplements.Core.DTOs.Cart;
 
-public class AddToCartRequest
+public class AddToCartRequest 
 {
     [Required] public Guid ProductVariantId { get; set; }
     [Required] [Range(1, int.MaxValue)] public int Quantity { get; set; }

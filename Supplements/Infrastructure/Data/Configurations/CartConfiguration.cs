@@ -11,7 +11,7 @@ public class CartConfiguration : IEntityTypeConfiguration<Cart>
         builder.HasOne(x => x.User)
             .WithOne(x => x.Cart)
             .HasForeignKey<Cart>(x => x.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Restrict); 
 
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
