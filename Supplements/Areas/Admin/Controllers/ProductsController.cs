@@ -166,22 +166,33 @@ public class ProductsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(Guid id, Product product, List<Guid>? removedVariantIds)
+    public async Task<IActionResult> Edit(Guid id, Product product)
     {
         if (id != product.Id) return NotFound();
 
-        var existing = await _context.Products
-            .Include(p => p.Variants)
-            .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
+        ModelState.Clear();
 
-        if (existing == null) return NotFound();
+        if (string.IsNullOrWhiteSpace(product.Name))
+            ModelState.AddModelError("Name", "Name is required");
+        if (product.CategoryId <= 0)
+            ModelState.AddModelError("CategoryId", "Category is required");
+        if (product.BrandId <= 0)
+            ModelState.AddModelError("BrandId", "Brand is required");
+        if (product.Price <= 0)
+            ModelState.AddModelError("Price", "Price must be greater than 0");
+        if (string.IsNullOrWhiteSpace(product.Currency))
+            ModelState.AddModelError("Currency", "Currency is required");
 
         if (!ModelState.IsValid)
         {
-            ViewBag.Categories = new SelectList(await _context.Categories.ToListAsync(), "Id", "Name", product.CategoryId);
-            ViewBag.Brands = new SelectList(await _context.Brands.ToListAsync(), "Id", "Name", product.BrandId);
+            ViewBag.Categories = new SelectList(await _context.Categories.OrderBy(c => c.Name).ToListAsync(), "Id", "Name", product.CategoryId);
+            ViewBag.Brands = new SelectList(await _context.Brands.OrderBy(b => b.Name).ToListAsync(), "Id", "Name", product.BrandId);
+            TempData["Error"] = "Please fill in all required fields correctly";
             return View(product);
         }
+
+        var existing = await _context.Products.FindAsync([id]);
+        if (existing == null || existing.IsDeleted) return NotFound();
 
         existing.Name = product.Name;
         existing.Description = product.Description;
@@ -195,47 +206,36 @@ public class ProductsController : Controller
         existing.IsActive = product.IsActive;
         existing.UpdatedAt = DateTime.UtcNow;
 
-        // Remove deleted variants
-        if (removedVariantIds != null)
+        // Soft-delete all existing variants
+        var existingVariants = await _context.ProductVariants
+            .Where(v => v.ProductId == id && !v.IsDeleted)
+            .ToListAsync();
+
+        foreach (var v in existingVariants)
+            v.IsDeleted = true;
+
+        // Add variants from form
+        var submittedVariants = product.Variants
+            .Where(HasVariantInput)
+            .ToList();
+
+        foreach (var fv in submittedVariants)
         {
-            var toRemove = existing.Variants.Where(v => removedVariantIds.Contains(v.Id)).ToList();
-            foreach (var variant in toRemove)
-                variant.IsDeleted = true;
+            _context.ProductVariants.Add(new ProductVariant
+            {
+                Id = Guid.NewGuid(),
+                ProductId = existing.Id,
+                Flavor = fv.Flavor,
+                Size = fv.Size,
+                ImageUrl = fv.ImageUrl,
+                AdditionalPrice = fv.AdditionalPrice,
+                StockQuantity = fv.StockQuantity
+            });
         }
 
-        // Update existing and add new variants
-        foreach (var formVariant in product.Variants.Where(HasVariantInput))
+        if (submittedVariants.Count == 0)
         {
-            if (formVariant.Id == Guid.Empty)
-            {
-                existing.Variants.Add(new ProductVariant
-                {
-                    Id = Guid.NewGuid(),
-                    ProductId = existing.Id,
-                    Flavor = formVariant.Flavor,
-                    Size = formVariant.Size,
-                    ImageUrl = formVariant.ImageUrl,
-                    AdditionalPrice = formVariant.AdditionalPrice,
-                    StockQuantity = formVariant.StockQuantity
-                });
-            }
-            else
-            {
-                var dbVariant = existing.Variants.FirstOrDefault(v => v.Id == formVariant.Id);
-                if (dbVariant != null)
-                {
-                    dbVariant.Flavor = formVariant.Flavor;
-                    dbVariant.Size = formVariant.Size;
-                    dbVariant.ImageUrl = formVariant.ImageUrl;
-                    dbVariant.AdditionalPrice = formVariant.AdditionalPrice;
-                    dbVariant.StockQuantity = formVariant.StockQuantity;
-                }
-            }
-        }
-
-        if (!existing.Variants.Any(v => !v.IsDeleted))
-        {
-            existing.Variants.Add(new ProductVariant
+            _context.ProductVariants.Add(new ProductVariant
             {
                 Id = Guid.NewGuid(),
                 ProductId = existing.Id,
