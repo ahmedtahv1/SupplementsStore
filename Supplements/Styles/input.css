@@ -351,4 +351,39 @@
     .animate-scale-in {
         animation: scaleIn 0.2s ease-out;
     }
+
+    /* Category Dropdown Animations */
+    @keyframes catDropdownIn {
+        from {
+            opacity: 0;
+            transform: translateY(-8px) scale(0.96);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    @keyframes catDropdownOut {
+        from {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        to {
+            opacity: 0;
+            transform: translateY(-8px) scale(0.96);
+        }
+    }
+
+    .cat-dropdown-enter {
+        animation: catDropdownIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .cat-dropdown-exit {
+        animation: catDropdownOut 0.15s ease-in forwards;
+    }
+
+    .chevron-rotate {
+        transform: rotate(180deg) !important;
+    }
 }

@@ -94,30 +94,119 @@
             {
                 <div class="mb-8">
                     <label class="block text-sm font-bold text-gray-900 dark:text-white mb-3">Select Options</label>
-                    <div class="select-wrap max-w-xl">
-                        <select id="variantSelect" class="select-ui select-ui-product">
-                            @foreach (var variant in Model.Variants)
+
+                    @{
+                        // Build variant data in one place for reuse
+                        var variantItems = Model.Variants.Select(variant =>
+                        {
+                            var optionName = string.Join(" / ", new[] { variant.Flavor, variant.Size }.Where(x => !string.IsNullOrWhiteSpace(x)));
+                            if (string.IsNullOrWhiteSpace(optionName)) optionName = "Default option";
+                            var optionBasePrice = Model.Price + variant.AdditionalPrice;
+                            var optionFinalPrice = optionBasePrice - (optionBasePrice * Model.DiscountPercentage / 100);
+                            var optionSavedAmount = optionBasePrice - optionFinalPrice;
+                            var isSelected = selectedVariant?.Id == variant.Id;
+                            return new {
+                                variant,
+                                optionName,
+                                optionBasePrice,
+                                optionFinalPrice,
+                                optionSavedAmount,
+                                isSelected
+                            };
+                        }).ToList();
+                    }
+
+                    <!-- Hidden native select (kept for JS/form compatibility – do not remove) -->
+                    <select id="variantSelect" class="hidden" aria-hidden="true" tabindex="-1">
+                        @foreach (var item in variantItems)
+                        {
+                            <option value="@item.variant.Id"
+                                    selected="@(item.isSelected)"
+                                    disabled="@(!item.variant.InStock)"
+                                    data-image="@(item.variant.ImageUrl ?? fallbackImageUrl)"
+                                    data-stock="@item.variant.StockQuantity"
+                                    data-base-price="@item.optionBasePrice.ToString("F2")"
+                                    data-final-price="@item.optionFinalPrice.ToString("F2")"
+                                    data-saved-amount="@item.optionSavedAmount.ToString("F2")"
+                                    data-in-stock="@item.variant.InStock.ToString().ToLowerInvariant()">
+                                @item.optionName - @Model.Currency @item.optionFinalPrice.ToString("F2") - @(item.variant.InStock ? $"{item.variant.StockQuantity} in stock" : "Out of stock")
+                            </option>
+                        }
+                    </select>
+
+                    <!-- Custom visual dropdown -->
+                    <div class="relative max-w-xl" id="variantDropdown" data-variant-dropdown>
+                         <button type="button"
+                                id="variantDropdownToggle"
+                                class="flex items-center justify-between w-full px-5 py-4 text-left border-2 border-primary-400 dark:border-primary-700 rounded-xl bg-white dark:bg-gray-900 cursor-pointer outline-none transition-all duration-200 hover:border-primary-500 hover:shadow-lg hover:shadow-primary-500/10 focus:border-primary-600 focus:ring-2 focus:ring-primary-500 dark:hover:border-primary-500 dark:focus:border-primary-400 shadow-sm"
+                                aria-haspopup="listbox"
+                                aria-expanded="false"
+                                aria-label="Select product option">
+                            <span id="variantTriggerLabel" class="text-sm font-semibold text-gray-900 dark:text-white truncate"></span>
+                            <span class="material-icons dropdown-chevron text-primary-600 dark:text-primary-400 text-lg transition-transform duration-300 flex-shrink-0 ml-3">expand_more</span>
+                        </button>
+
+                        <div id="variantDropdownMenu"
+                             class="hidden absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/40 border border-gray-200/80 dark:border-gray-800/80 backdrop-blur-xl py-2 z-50 overflow-hidden origin-top-left max-h-96 overflow-y-auto"
+                             role="listbox"
+                             aria-label="Product options">
+
+                            @foreach (var item in variantItems)
                             {
-                                var optionName = string.Join(" / ", new[] { variant.Flavor, variant.Size }.Where(x => !string.IsNullOrWhiteSpace(x)));
-                                if (string.IsNullOrWhiteSpace(optionName))
-                                    optionName = "Default option";
-                                var optionBasePrice = Model.Price + variant.AdditionalPrice;
-                                var optionFinalPrice = optionBasePrice - (optionBasePrice * Model.DiscountPercentage / 100);
-                                var optionSavedAmount = optionBasePrice - optionFinalPrice;
-                                <option value="@variant.Id"
-                                        selected="@(selectedVariant?.Id == variant.Id)"
-                                        disabled="@(!variant.InStock)"
-                                        data-image="@(variant.ImageUrl ?? fallbackImageUrl)"
-                                        data-stock="@variant.StockQuantity"
-                                        data-base-price="@optionBasePrice.ToString("F2")"
-                                        data-final-price="@optionFinalPrice.ToString("F2")"
-                                        data-saved-amount="@optionSavedAmount.ToString("F2")"
-                                        data-in-stock="@variant.InStock.ToString().ToLowerInvariant()">
-                                    @optionName - @Model.Currency @optionFinalPrice.ToString("F2") - @(variant.InStock ? $"{variant.StockQuantity} in stock" : "Out of stock")
-                                </option>
+                                var isDisabled = !item.variant.InStock;
+
+                                <button type="button"
+                                        class="variant-option w-full flex items-center gap-4 px-5 py-3.5 text-left transition-all duration-200 group
+                                               @(item.isSelected ? "bg-primary-50/80 dark:bg-primary-900/20" : "hover:bg-gray-50 dark:hover:bg-gray-800/80")
+                                               @(isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer")"
+                                        data-variant-id="@item.variant.Id"
+                                        data-image="@(item.variant.ImageUrl ?? fallbackImageUrl)"
+                                        data-stock="@item.variant.StockQuantity"
+                                        data-base-price="@item.optionBasePrice.ToString("F2")"
+                                        data-final-price="@item.optionFinalPrice.ToString("F2")"
+                                        data-saved-amount="@item.optionSavedAmount.ToString("F2")"
+                                        data-in-stock="@item.variant.InStock.ToString().ToLowerInvariant()"
+                                        @(isDisabled ? "disabled" : "")
+                                        role="option"
+                                        aria-selected="@(item.isSelected ? "true" : "false")">
+
+                                    <!-- Radio indicator -->
+                                    <span data-variant-radio
+                                          class="flex-shrink-0 w-[18px] h-[18px] rounded-full border-2 transition-all duration-200 flex items-center justify-center
+                                                 @(item.isSelected ? "border-primary-600 dark:border-primary-400" : "border-gray-300 dark:border-gray-600")">
+                                        @if (item.isSelected)
+                                        {
+                                            <span data-variant-dot class="w-[10px] h-[10px] rounded-full bg-primary-600 dark:bg-primary-400"></span>
+                                        }
+                                    </span>
+
+                                    <!-- Option content -->
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center justify-between gap-3">
+                                            <span data-variant-name
+                                                  class="font-semibold text-sm @(item.isSelected ? "text-primary-700 dark:text-primary-300" : "text-gray-900 dark:text-white") transition-colors duration-200 truncate">
+                                                @item.optionName
+                                            </span>
+                                            <span data-variant-price
+                                                  class="font-bold text-sm @(item.isSelected ? "text-primary-600 dark:text-primary-400" : "text-gray-900 dark:text-white") flex-shrink-0">
+                                                @Model.Currency @item.optionFinalPrice.ToString("F2")
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <span class="inline-flex items-center gap-1.5 text-xs @(item.variant.InStock ? "text-green-600 dark:text-green-400" : "text-red-500 dark:text-red-400")">
+                                                <span class="w-1.5 h-1.5 rounded-full @(item.variant.InStock ? "bg-green-500" : "bg-red-500")"></span>
+                                                @(item.variant.InStock ? $"{item.variant.StockQuantity} in stock" : "Out of stock")
+                                            </span>
+                                        </div>
+                                    </div>
+                                </button>
+
+                                @if (!ReferenceEquals(item, variantItems.Last()))
+                                {
+                                    <div class="border-t border-gray-100 dark:border-gray-800 mx-4"></div>
+                                }
                             }
-                        </select>
-                        <span class="material-icons select-ui-icon">expand_more</span>
+                        </div>
                     </div>
                 </div>
             }
@@ -272,6 +361,116 @@
             setStockState(inStock, stock);
         }
 
+        /* ── Custom Variant Dropdown ── */
+
+        function updateVariantTriggerLabel() {
+            const select = document.getElementById('variantSelect');
+            const label = document.getElementById('variantTriggerLabel');
+            if (!select || !label) return;
+            const option = select.selectedOptions[0];
+            if (!option) { label.textContent = 'Select an option'; return; }
+            const parts = option.text.split(' - ');
+            if (parts.length >= 2) {
+                label.innerHTML = `${parts[0]} <span class="text-primary-600 dark:text-primary-400 font-bold">${parts[1]}</span>`;
+            } else {
+                label.textContent = option.text;
+            }
+        }
+
+        function syncVisualSelection() {
+            const select = document.getElementById('variantSelect');
+            if (!select) return;
+            const selectedId = select.value;
+
+            document.querySelectorAll('.variant-option').forEach(btn => {
+                const isSelected = btn.dataset.variantId === selectedId;
+
+                btn.classList.toggle('bg-primary-50/80', isSelected);
+                btn.classList.toggle('dark:bg-primary-900/20', isSelected);
+                btn.classList.toggle('hover:bg-gray-50', !isSelected);
+                btn.classList.toggle('dark:hover:bg-gray-800/80', !isSelected);
+                btn.setAttribute('aria-selected', String(isSelected));
+
+                const radio = btn.querySelector('[data-variant-radio]');
+                if (radio) {
+                    radio.classList.toggle('border-primary-600', isSelected);
+                    radio.classList.toggle('dark:border-primary-400', isSelected);
+                    radio.classList.toggle('border-gray-300', !isSelected);
+                    radio.classList.toggle('dark:border-gray-600', !isSelected);
+                    let dot = radio.querySelector('[data-variant-dot]');
+                    if (isSelected) {
+                        if (!dot) {
+                            dot = document.createElement('span');
+                            dot.dataset.variantDot = '';
+                            dot.className = 'w-[10px] h-[10px] rounded-full bg-primary-600 dark:bg-primary-400';
+                            radio.appendChild(dot);
+                        }
+                    } else {
+                        if (dot) dot.remove();
+                    }
+                }
+
+                const nameEl = btn.querySelector('[data-variant-name]');
+                if (nameEl) {
+                    nameEl.classList.toggle('text-primary-700', isSelected);
+                    nameEl.classList.toggle('dark:text-primary-300', isSelected);
+                    nameEl.classList.toggle('text-gray-900', !isSelected);
+                    nameEl.classList.toggle('dark:text-white', !isSelected);
+                }
+
+                const priceEl = btn.querySelector('[data-variant-price]');
+                if (priceEl) {
+                    priceEl.classList.toggle('text-primary-600', isSelected);
+                    priceEl.classList.toggle('dark:text-primary-400', isSelected);
+                    priceEl.classList.toggle('text-gray-900', !isSelected);
+                    priceEl.classList.toggle('dark:text-white', !isSelected);
+                }
+            });
+        }
+
+        function selectVariantOption(btn) {
+            if (btn.disabled) return;
+            const select = document.getElementById('variantSelect');
+            if (!select) return;
+            select.value = btn.dataset.variantId;
+            select.dispatchEvent(new Event('change'));
+            updateVariantTriggerLabel();
+            syncVisualSelection();
+            closeVariantDropdown();
+        }
+
+        function toggleVariantDropdown() {
+            const menu = document.getElementById('variantDropdownMenu');
+            const toggle = document.getElementById('variantDropdownToggle');
+            if (!menu || !toggle) return;
+            const isOpening = menu.classList.contains('hidden');
+            if (isOpening) {
+                menu.classList.remove('hidden', 'cat-dropdown-exit');
+                void menu.offsetWidth;
+                menu.classList.add('cat-dropdown-enter');
+                toggle.querySelector('.dropdown-chevron')?.classList.add('chevron-rotate');
+                toggle.setAttribute('aria-expanded', 'true');
+            } else {
+                closeVariantDropdown();
+            }
+        }
+
+        function closeVariantDropdown() {
+            const menu = document.getElementById('variantDropdownMenu');
+            const toggle = document.getElementById('variantDropdownToggle');
+            if (!menu || menu.classList.contains('hidden')) return;
+            menu.classList.remove('cat-dropdown-enter');
+            menu.classList.add('cat-dropdown-exit');
+            toggle?.querySelector('.dropdown-chevron')?.classList.remove('chevron-rotate');
+            toggle?.setAttribute('aria-expanded', 'false');
+            setTimeout(() => {
+                menu.classList.add('hidden');
+                menu.classList.remove('cat-dropdown-exit');
+            }, 150);
+        }
+
+        /* ── Init ── */
+
         document.getElementById('quantityInput')?.addEventListener('change', function() {
             document.getElementById('addToCartQuantity').value = this.value;
         });
@@ -280,10 +479,40 @@
                 document.getElementById('addToCartQuantity').value = document.getElementById('quantityInput').value;
             });
         });
+
         const variantSelect = document.getElementById('variantSelect');
         if (variantSelect) {
             variantSelect.addEventListener('change', function() { selectVariant(this); });
             selectVariant(variantSelect);
+            updateVariantTriggerLabel();
+            syncVisualSelection();
         }
+
+        // Toggle dropdown on trigger click
+        const ddToggle = document.getElementById('variantDropdownToggle');
+        ddToggle?.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleVariantDropdown();
+        });
+
+        // Select option via event delegation on the menu
+        const ddMenu = document.getElementById('variantDropdownMenu');
+        ddMenu?.addEventListener('click', function(e) {
+            const btn = e.target.closest('.variant-option');
+            if (btn) selectVariantOption(btn);
+        });
+
+        // Close dropdown on outside click
+        document.addEventListener('click', function(e) {
+            const container = document.getElementById('variantDropdown');
+            if (container && !container.contains(e.target)) {
+                closeVariantDropdown();
+            }
+        });
+
+        // Close on Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeVariantDropdown();
+        });
     </script>
 }
