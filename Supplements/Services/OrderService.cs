@@ -54,7 +54,7 @@ public class OrderService
             UserId = userId,
             AddressId = request.AddressId,
             Status = "Pending",
-            ShippingCost = 10,
+            ShippingCost = 100,
             Notes = request.Notes
         };
 

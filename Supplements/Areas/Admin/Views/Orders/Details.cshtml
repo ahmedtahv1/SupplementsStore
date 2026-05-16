@@ -1,4 +1,4 @@
-@model Supplements.Core.Entities.Order
+@model OrderDetailsViewModel
 @{
     ViewData["Title"] = $"Order {Model.Id.ToString("N")}";
 }
@@ -32,23 +32,26 @@
                                 {
                                     <tr>
                                         <td class="px-4 py-3">
-                                            <p class="font-medium text-gray-900 dark:text-white">@item.ProductVariant.Product.Name</p>
-                                            <p class="text-xs text-gray-500">@item.ProductVariant.Flavor - @item.ProductVariant.Size</p>
+                                            <p class="font-medium text-gray-900 dark:text-white">@item.ProductName</p>
+                                            @if (!string.IsNullOrEmpty(item.Flavor) || !string.IsNullOrEmpty(item.Size))
+                                            {
+                                                <p class="text-xs text-gray-500">@item.Flavor@(item.Flavor != null && item.Size != null ? " - " : "")@item.Size</p>
+                                            }
                                         </td>
                                         <td class="px-4 py-3 text-center text-gray-600 dark:text-gray-400">@item.Quantity</td>
-                                        <td class="px-4 py-3 text-right text-gray-600 dark:text-gray-400">$@item.UnitPrice.ToString("N2")</td>
-                                        <td class="px-4 py-3 text-right font-semibold text-gray-900 dark:text-white">$@item.TotalPrice.ToString("N2")</td>
+                                        <td class="px-4 py-3 text-right text-gray-600 dark:text-gray-400">ج.م @item.UnitPrice.ToString("N2")</td>
+                                        <td class="px-4 py-3 text-right font-semibold text-gray-900 dark:text-white">ج.م @item.TotalPrice.ToString("N2")</td>
                                     </tr>
                                 }
                             </tbody>
                             <tfoot>
                                 <tr class="bg-gray-50 dark:bg-gray-800 font-semibold">
                                     <td colspan="3" class="px-4 py-3 text-right text-gray-600 dark:text-gray-400">Shipping</td>
-                                    <td class="px-4 py-3 text-right text-gray-900 dark:text-white">$@Model.ShippingCost.ToString("N2")</td>
+                                    <td class="px-4 py-3 text-right text-gray-900 dark:text-white">ج.م @Model.ShippingCost.ToString("N2")</td>
                                 </tr>
                                 <tr class="bg-gray-50 dark:bg-gray-800 font-semibold text-lg">
                                     <td colspan="3" class="px-4 py-3 text-right text-gray-900 dark:text-white">Total</td>
-                                    <td class="px-4 py-3 text-right text-gray-900 dark:text-white">$@Model.TotalPrice.ToString("N2")</td>
+                                    <td class="px-4 py-3 text-right text-gray-900 dark:text-white">ج.م @Model.TotalPrice.ToString("N2")</td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -61,17 +64,17 @@
             <div class="card">
                 <div class="card-body">
                     <h4 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Customer</h4>
-                    <p class="font-medium text-gray-900 dark:text-white">@Model.User.FullName</p>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">@Model.User.Email</p>
+                    <p class="font-medium text-gray-900 dark:text-white">@Model.CustomerName</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">@Model.CustomerEmail</p>
                 </div>
             </div>
 
             <div class="card">
                 <div class="card-body">
                     <h4 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Shipping Address</h4>
-                    <p class="text-sm text-gray-900 dark:text-white">@Model.Address.Street</p>
-                    <p class="text-sm text-gray-900 dark:text-white">@Model.Address.City</p>
-                    <p class="text-sm text-gray-900 dark:text-white">@Model.Address.Country</p>
+                    <p class="text-sm text-gray-900 dark:text-white">@Model.AddressStreet</p>
+                    <p class="text-sm text-gray-900 dark:text-white">@Model.AddressCity</p>
+                    <p class="text-sm text-gray-900 dark:text-white">@Model.AddressCountry</p>
                 </div>
             </div>
 

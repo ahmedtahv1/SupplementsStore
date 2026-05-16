@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Supplements.Infrastructure.Data;
+using Supplements.ViewModels.Admin;
 
 namespace Supplements.Areas.Admin.Controllers;
 
@@ -44,15 +45,46 @@ public class OrdersController : Controller
     public async Task<IActionResult> Details(Guid id)
     {
         var order = await _context.Orders
+            .AsNoTracking()
+            .IgnoreQueryFilters()
             .Include(o => o.User)
             .Include(o => o.Address)
             .Include(o => o.Items)
             .ThenInclude(i => i.ProductVariant)
             .ThenInclude(v => v.Product)
-            .FirstOrDefaultAsync(o => o.Id == id && !o.IsDeleted);
+            .FirstOrDefaultAsync(o => o.Id == id);
 
         if (order == null) return NotFound();
-        return View(order);
+
+        var items = order.Items
+            .Where(i => !i.IsDeleted && i.ProductVariant != null && i.ProductVariant.Product != null)
+            .Select(i => new OrderItemViewModel
+            {
+                ProductName = i.ProductVariant.Product.Name,
+                Flavor = i.ProductVariant.Flavor,
+                Size = i.ProductVariant.Size,
+                Quantity = i.Quantity,
+                UnitPrice = i.UnitPrice,
+                TotalPrice = i.TotalPrice
+            }).ToList();
+
+        var viewModel = new OrderDetailsViewModel
+        {
+            Id = order.Id,
+            Status = order.Status,
+            OrderDate = order.OrderDate,
+            TotalPrice = order.TotalPrice,
+            ShippingCost = order.ShippingCost,
+            Notes = order.Notes,
+            CustomerName = order.User?.FullName ?? "N/A",
+            CustomerEmail = order.User?.Email ?? "N/A",
+            AddressStreet = order.Address?.Street ?? "",
+            AddressCity = order.Address?.City ?? "",
+            AddressCountry = order.Address?.Country ?? "",
+            Items = items
+        };
+
+        return View(viewModel);
     }
 
     [HttpPost]
@@ -72,3 +104,5 @@ public class OrdersController : Controller
         return RedirectToAction("Details", new { id });
     }
 }
+
+

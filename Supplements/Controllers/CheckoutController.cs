@@ -56,7 +56,7 @@ public class CheckoutController : Controller
                 TotalPrice = i.TotalPrice
             }).ToList(),
             SubTotal = cart.TotalPrice,
-            TotalPrice = cart.TotalPrice + 10,
+            TotalPrice = cart.TotalPrice + 100,
             Addresses = addresses.Select(a => new AddressViewModel
             {
                 Id = a.Id,

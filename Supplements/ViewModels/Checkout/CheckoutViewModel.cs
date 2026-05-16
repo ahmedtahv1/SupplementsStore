@@ -7,7 +7,7 @@ public class CheckoutViewModel
 {
     public List<CartItemViewModel> Items { get; set; } = new();
     public decimal SubTotal { get; set; }
-    public decimal ShippingCost { get; set; } = 10;
+    public decimal ShippingCost { get; set; } = 100;
     public decimal TotalPrice { get; set; }
     public List<AddressViewModel> Addresses { get; set; } = new();
     public Guid? SelectedAddressId { get; set; }

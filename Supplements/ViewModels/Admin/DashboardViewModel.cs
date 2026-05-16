@@ -68,3 +68,29 @@ public class MonthlySalesViewModel
     public int Orders { get; set; }
     public decimal Revenue { get; set; }
 }
+
+public class OrderDetailsViewModel
+{
+    public Guid Id { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public DateTime OrderDate { get; set; }
+    public decimal TotalPrice { get; set; }
+    public decimal ShippingCost { get; set; }
+    public string? Notes { get; set; }
+    public string CustomerName { get; set; } = string.Empty;
+    public string CustomerEmail { get; set; } = string.Empty;
+    public string AddressStreet { get; set; } = string.Empty;
+    public string AddressCity { get; set; } = string.Empty;
+    public string AddressCountry { get; set; } = string.Empty;
+    public List<OrderItemViewModel> Items { get; set; } = new();
+}
+
+public class OrderItemViewModel
+{
+    public string ProductName { get; set; } = string.Empty;
+    public string? Flavor { get; set; }
+    public string? Size { get; set; }
+    public int Quantity { get; set; }
+    public decimal UnitPrice { get; set; }
+    public decimal TotalPrice { get; set; }
+}
